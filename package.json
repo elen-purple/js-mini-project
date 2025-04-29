@@ -6,19 +6,19 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "npx parcel src/index.html",
-    "build": "parcel build src/index.html",
+    "build": "parcel build src/index.html --public-url ./",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
-    "server": "npx json-server students.json"
+    "deploy": "gh-pages -d dist"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "gh-pages": "^6.3.0",
-    "parcel": "^2.14.4"
+    "parcel": "^2.14.4",
+    "parcel-transformer-hbs": "^1.0.4"
   },
   "dependencies": {
-    "json-server": "^1.0.0-beta.3"
+    "handlebars": "^4.7.8"
   }
 }

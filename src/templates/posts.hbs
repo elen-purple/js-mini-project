@@ -1,0 +1,15 @@
+{{#each data}}
+  <li id="{{id}}" class="posts__item">
+    <div class="posts__wrapper">
+      <img src="{{avatar}}" alt="{{tag}}" class="posts__img" />
+      <h3 class="posts__name">{{user}}</h3>
+    </div>
+    <p class="posts__tag">{{tag}}</p>
+    <p class="posts__body">{{body}}</p>
+    <button class="posts__comments">See comments</button>
+    <div class="posts__btns">
+      <button class="posts__btn posts__btn--update">Update</button>
+      <button class="posts__btn posts__btn--delete">Delete</button>
+    </div>
+  </li>
+{{/each}}
