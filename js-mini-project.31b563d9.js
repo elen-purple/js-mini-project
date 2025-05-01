@@ -711,8 +711,8 @@ document.querySelector(".add__form").addEventListener("submit", async (e)=>{
     const post = {
         avatar: e.target[0].value,
         user: e.target[1].value,
-        body: e.target[2].value,
-        tag: e.target[3].value,
+        tag: e.target[2].value,
+        body: e.target[3].value,
         comments: []
     };
     e.target[0].value = "";
@@ -743,13 +743,14 @@ document.querySelector(".posts__list").addEventListener("click", async (e)=>{
         });
     } else if (e.target.classList.contains("posts__btn--delete")) {
         await (0, _deletePost.deletePost)(e.target.parentElement.parentElement.id);
-        document.querySelector(".posts__list").innerHTML = "";
-        for(let i = 1; i < page + 1; i += 1)await (0, _getPosts.getPosts)(i).then((data)=>{
+        let postsLayout = "";
+        for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", search, i).then((data)=>{
             const layout = (0, _postsHbsDefault.default)({
                 data
             });
-            document.querySelector(".posts__list").insertAdjacentHTML("beforeend", layout);
+            postsLayout = postsLayout.concat("", layout);
         });
+        document.querySelector(".posts__list").innerHTML = postsLayout;
     }
 });
 document.querySelector(".update__close").addEventListener("click", ()=>{
@@ -772,13 +773,14 @@ document.querySelector(".update__form").addEventListener("submit", async (e)=>{
     document.querySelector(".backdrop").classList.toggle("is-hidden");
     document.querySelector("body").classList.toggle("no-scroll");
     await (0, _updatePost.updatePost)(post, currentId);
-    document.querySelector(".posts__list").innerHTML = "";
-    for(let i = 1; i < page + 1; i += 1)await (0, _getPosts.getPosts)(i).then((data)=>{
+    let postsLayout = "";
+    for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", search, i).then((data)=>{
         const layout = (0, _postsHbsDefault.default)({
             data
         });
-        document.querySelector(".posts__list").insertAdjacentHTML("beforeend", layout);
+        postsLayout = postsLayout.concat("", layout);
     });
+    document.querySelector(".posts__list").innerHTML = postsLayout;
 });
 let commentId = "";
 document.querySelector(".posts__list").addEventListener("click", async (e)=>{
