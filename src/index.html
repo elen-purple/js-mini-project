@@ -22,6 +22,28 @@
     <link rel="stylesheet" href="./index.css" />
   </head>
   <body>
+    <header class="header">
+      <div class="container">
+        <ul class="header__list">
+          <li class="header__item">
+            <button class="header__btn" id="sign-up" type="button">
+              Sign up
+            </button>
+          </li>
+          <li class="header__item">
+            <button class="header__btn" id="log-in" type="button">
+              Log in
+            </button>
+          </li>
+        </ul>
+        <div class="header__wrapper">
+          <p class="header__hello">Hello, <span class="header__name"></span></p>
+          <button class="header__out" id="log-out" type="button">
+            Log out
+          </button>
+        </div>
+      </div>
+    </header>
     <section class="hero">
       <div class="container">
         <h1 class="hero__title">My blog</h1>
@@ -47,7 +69,7 @@
             Your text
             <textarea required class="add__text" name="body"></textarea>
           </label>
-          <button class="add__submit">Create</button>
+          <button type="submit" class="add__submit">Create</button>
         </form>
       </div>
     </section>
@@ -116,6 +138,64 @@
             />
           </label>
           <button class="modal__btn" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+    <div class="backdrop signup__backdrop is-hidden">
+      <div class="signup">
+        <button class="signup__close">X</button>
+        <h2 class="signup__title">Sign up</h2>
+        <form class="signup__form">
+          <label class="signup__label">
+            Your name
+            <span id="error-name" class="display-none signup__span">*</span>
+            <input required type="text" name="user" class="signup__input" />
+          </label>
+          <label class="signup__label">
+            Your email
+            <span id="error-email" class="display-none signup__span">*</span>
+            <input required type="email" name="email" class="signup__input" />
+          </label>
+          <label class="signup__label">
+            Your password
+            <input
+              required
+              class="signup__input"
+              name="password"
+              type="password"
+            />
+          </label>
+          <p class="signup__error display-none">
+            * There is such email or nickname
+          </p>
+          <button class="signup__submit">Sign up</button>
+        </form>
+      </div>
+    </div>
+    <div class="backdrop login__backdrop is-hidden">
+      <div class="login">
+        <button class="login__close">X</button>
+        <h2 class="login__title">Log in</h2>
+        <form class="login__form">
+          <label class="login__label">
+            Your email
+            <span id="login-error-email" class="display-none login__span">*</span>
+            <input required type="email" name="email" class="login__input" />
+          </label>
+          <label class="login__label">
+            Your password
+            <span id="login-error-password" class="display-none login__span">*</span>
+            <input
+              required
+              class="login__input"
+              name="password"
+              type="password"
+            />
+          </label>
+          <p class="login__error display-none">
+            * There is incorrect email or password
+          </p>
+          <button class="login__submit">Log in</button>
         </form>
       </div>
     </div>
