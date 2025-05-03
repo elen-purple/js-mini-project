@@ -671,17 +671,36 @@ var _appJs = require("./js/app.js");
 
 },{"./js/app.js":"9f5IL"}],"9f5IL":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-var _getPosts = require("./crud/get-posts");
-var _createPosts = require("./crud/create-posts");
-var _updatePost = require("./crud/update-post");
-var _getPost = require("./crud/get-post");
-var _deletePost = require("./crud/delete-post");
-var _getFilteredPosts = require("./crud/get-filtered-posts");
+var _getPosts = require("./crud/posts/get-posts");
+var _createPosts = require("./crud/posts/create-posts");
+var _updatePost = require("./crud/posts/update-post");
+var _getPost = require("./crud/posts/get-post");
+var _deletePost = require("./crud/posts/delete-post");
+var _getFilteredPosts = require("./crud/posts/get-filtered-posts");
+var _createUser = require("./crud/users/create-user");
+var _getUsers = require("./crud/users/get-users");
 var _postsHbs = require("../templates/posts.hbs");
 var _postsHbsDefault = parcelHelpers.interopDefault(_postsHbs);
+var _postsNologinedHbs = require("../templates/posts-nologined.hbs");
+var _postsNologinedHbsDefault = parcelHelpers.interopDefault(_postsNologinedHbs);
+if (!Object.keys(localStorage).includes("isLogined")) localStorage.setItem("isLogined", "");
+if (localStorage.getItem("isLogined")) {
+    document.querySelector(".header__list").classList.add("display-none");
+    document.querySelector(".header__wrapper").classList.remove("display-none");
+    document.querySelector(".header__name").textContent = localStorage.getItem("isLogined");
+    document.querySelector(".add__form").querySelector(`[name="name"]`).value = localStorage.getItem("isLogined");
+    document.querySelector(".add__form").querySelector(`[name="name"]`).setAttribute("disabled", "");
+} else {
+    document.querySelector(".header__list").classList.remove("display-none");
+    document.querySelector(".header__wrapper").classList.add("display-none");
+}
 let page = 1;
 (0, _getPosts.getPosts)(page).then((data)=>{
-    const layout = (0, _postsHbsDefault.default)({
+    let layout;
+    if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
+        data
+    });
+    else layout = (0, _postsNologinedHbsDefault.default)({
         data
     });
     document.querySelector(".posts__list").innerHTML = layout;
@@ -691,7 +710,11 @@ document.querySelector(".posts__load").addEventListener("click", ()=>{
     if (document.querySelector(".posts__input").value !== "") {
         page += 1;
         (0, _getFilteredPosts.getFilteredPosts)("tag", search, page).then((data)=>{
-            const layout = (0, _postsHbsDefault.default)({
+            let layout;
+            if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
+                data
+            });
+            else layout = (0, _postsNologinedHbsDefault.default)({
                 data
             });
             document.querySelector(".posts__list").insertAdjacentHTML("beforeend", layout);
@@ -699,7 +722,11 @@ document.querySelector(".posts__load").addEventListener("click", ()=>{
     } else {
         page += 1;
         (0, _getPosts.getPosts)(page).then((data)=>{
-            const layout = (0, _postsHbsDefault.default)({
+            let layout;
+            if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
+                data
+            });
+            else layout = (0, _postsNologinedHbsDefault.default)({
                 data
             });
             document.querySelector(".posts__list").insertAdjacentHTML("beforeend", layout);
@@ -722,7 +749,11 @@ document.querySelector(".add__form").addEventListener("submit", async (e)=>{
     await (0, _createPosts.createPost)(post);
     let postsLayout = "";
     for(let i = 1; i < page + 1; i += 1)await (0, _getPosts.getPosts)(i).then((data)=>{
-        const layout = (0, _postsHbsDefault.default)({
+        let layout;
+        if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
+            data
+        });
+        else layout = (0, _postsNologinedHbsDefault.default)({
             data
         });
         postsLayout = postsLayout.concat("", layout);
@@ -734,15 +765,15 @@ document.querySelector(".posts__list").addEventListener("click", async (e)=>{
     if (e.target.classList.contains("posts__btn--update")) {
         document.querySelector(".backdrop").classList.toggle("is-hidden");
         document.querySelector("body").classList.toggle("no-scroll");
-        currentId = e.target.parentElement.parentElement.id;
-        await (0, _getPost.getPost)(e.target.parentElement.parentElement.id).then((post)=>{
+        currentId = e.target.parentElement.parentElement.parentElement.id;
+        await (0, _getPost.getPost)(e.target.parentElement.parentElement.parentElement.id).then((post)=>{
             document.querySelector(".backdrop").querySelector(`[name="avatar"]`).value = post.avatar;
             document.querySelector(".backdrop").querySelector(`[name="user"]`).value = post.user;
             document.querySelector(".backdrop").querySelector(`[name="tag"]`).value = post.tag;
             document.querySelector(".backdrop").querySelector(`[name="body"]`).value = post.body;
         });
     } else if (e.target.classList.contains("posts__btn--delete")) {
-        await (0, _deletePost.deletePost)(e.target.parentElement.parentElement.id);
+        await (0, _deletePost.deletePost)(e.target.parentElement.parentElement.parentElement.id);
         let postsLayout = "";
         for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", search, i).then((data)=>{
             const layout = (0, _postsHbsDefault.default)({
@@ -785,20 +816,17 @@ document.querySelector(".update__form").addEventListener("submit", async (e)=>{
 let commentId = "";
 document.querySelector(".posts__list").addEventListener("click", async (e)=>{
     if (e.target.classList.contains("posts__comments")) {
-        commentId = e.target.parentElement.id;
+        commentId = e.target.parentElement.parentElement.id;
         document.querySelector(".modal__backdrop").classList.toggle("is-hidden");
         document.querySelector("body").classList.toggle("no-scroll");
-        const post = await (0, _getPost.getPost)(e.target.parentElement.id);
+        const post = await (0, _getPost.getPost)(e.target.parentElement.parentElement.id);
         document.querySelector("#modal__avatar").src = post.avatar;
         document.querySelector("#modal__user").textContent = post.user;
         document.querySelector("#modal__tag").textContent = post.tag;
         document.querySelector("#modal__body").textContent = post.body;
-        document.querySelector("#modal__comments").innerHTML = post.comments.map((com)=>`<li class="modal__comment">${com.text}</li>`).join("");
+        document.querySelector("#modal__comments").innerHTML = post.comments.map((com)=>`<li class="modal__comment"><h3 class='modal__author'>${com.author}</h3><p class='modal__message'>${com.text}</p></li>`).join("");
         if (document.querySelector("#modal__comments").innerHTML === "") document.querySelector("#modal__comments").innerHTML = `<p class="modal__none">There are any comments yet...</p>`;
     }
-});
-document.querySelector(".modal__form").addEventListener("submit", (e)=>{
-    e.preventDefault();
 });
 document.querySelector(".modal__close").addEventListener("click", async ()=>{
     document.querySelector(".modal__backdrop").classList.toggle("is-hidden");
@@ -818,6 +846,7 @@ document.querySelector(".modal__form").addEventListener("submit", async (e)=>{
     ];
     document.querySelector(".modal__input").value = "";
     comments[comments.length] = {
+        author: localStorage.getItem("isLogined"),
         text: comment
     };
     const updatedPost = {
@@ -835,11 +864,72 @@ document.querySelector(".modal__form").addEventListener("submit", async (e)=>{
     document.querySelector("#modal__user").textContent = gettedPost.user;
     document.querySelector("#modal__tag").textContent = gettedPost.tag;
     document.querySelector("#modal__body").textContent = gettedPost.body;
-    document.querySelector("#modal__comments").innerHTML = gettedPost.comments.map((com)=>`<li class="modal__comment">${com.text}</li>`).join("");
+    document.querySelector("#modal__comments").innerHTML = gettedPost.comments.map((com)=>`<li class="modal__comment"><h3 class='modal__author'>${com.author}</h3><p class='modal__message'>${com.text}</p></li>`).join("");
 });
 document.querySelector(".posts__input").addEventListener("input", async (e)=>{
     search = e.currentTarget.value;
     page = 1;
+    let postsLayout = "";
+    for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", search, i).then((data)=>{
+        let layout;
+        if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
+            data
+        });
+        else layout = (0, _postsNologinedHbsDefault.default)({
+            data
+        });
+        postsLayout = postsLayout.concat("", layout);
+    });
+    document.querySelector(".posts__list").innerHTML = postsLayout;
+    if (document.querySelector(".posts__list").innerHTML === "") document.querySelector(".posts__list").innerHTML = `<p class="posts__none">There are any posts like this...</p>`;
+});
+document.querySelector("#sign-up").addEventListener("click", ()=>{
+    document.querySelector(".signup__backdrop").classList.remove("is-hidden");
+    document.querySelector("body").classList.add("no-scroll");
+});
+document.querySelector(".signup__close").addEventListener("click", ()=>{
+    document.querySelector(".signup__backdrop").classList.add("is-hidden");
+    document.querySelector("body").classList.remove("no-scroll");
+    document.querySelector(".signup__form").querySelector(`[name="user"]`).value = "";
+    document.querySelector(".signup__form").querySelector(`[name="email"]`).value = "";
+    document.querySelector(".signup__form").querySelector(`[name="password"]`).value = "";
+    document.querySelector("#error-name").classList.add("display-none");
+    document.querySelector("#error-email").classList.add("display-none");
+    document.querySelector(".signup__error").classList.add("display-none");
+});
+document.querySelector(".signup__form").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    document.querySelector("#error-name").classList.add("display-none");
+    document.querySelector(".signup__error").classList.add("display-none");
+    document.querySelector("#error-email").classList.add("display-none");
+    const myUser = {
+        name: e.target[0].value,
+        email: e.target[1].value,
+        password: e.target[2].value
+    };
+    const email = await (0, _getUsers.getUsers)().then((users)=>users.filter((user)=>user.email === myUser.email).length > 0);
+    const name = await (0, _getUsers.getUsers)().then((users)=>users.filter((user)=>user.name === myUser.name).length > 0);
+    if (name || email) {
+        document.querySelector(".signup__error").classList.remove("display-none");
+        if (email) document.querySelector("#error-email").classList.remove("display-none");
+        if (name) document.querySelector("#error-name").classList.remove("display-none");
+        return;
+    }
+    document.querySelector(".signup__backdrop").classList.add("is-hidden");
+    document.querySelector("body").classList.remove("no-scroll");
+    document.querySelector("#error-name").classList.add("display-none");
+    document.querySelector(".signup__error").classList.add("display-none");
+    document.querySelector("#error-email").classList.add("display-none");
+    e.target[0].value = "";
+    e.target[1].value = "";
+    e.target[2].value = "";
+    document.querySelector(".header__list").classList.add("display-none");
+    document.querySelector(".header__wrapper").classList.remove("display-none");
+    await (0, _createUser.createUser)(myUser);
+    localStorage.setItem("isLogined", myUser.name);
+    document.querySelector(".header__name").textContent = myUser.name;
+    document.querySelector(".add__form").querySelector(`[name="name"]`).value = localStorage.getItem("isLogined");
+    document.querySelector(".add__form").querySelector(`[name="name"]`).setAttribute("disabled", "");
     let postsLayout = "";
     for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", search, i).then((data)=>{
         const layout = (0, _postsHbsDefault.default)({
@@ -848,88 +938,78 @@ document.querySelector(".posts__input").addEventListener("input", async (e)=>{
         postsLayout = postsLayout.concat("", layout);
     });
     document.querySelector(".posts__list").innerHTML = postsLayout;
-    if (document.querySelector(".posts__list").innerHTML === "") document.querySelector(".posts__list").innerHTML = `<p class="posts__none">There are any posts like this...</p>`;
+});
+document.querySelector("#log-out").addEventListener("click", async ()=>{
+    document.querySelector(".header__list").classList.remove("display-none");
+    document.querySelector(".header__wrapper").classList.add("display-none");
+    localStorage.setItem("isLogined", "");
+    document.querySelector(".add__form").querySelector(`[name="name"]`).value = "";
+    document.querySelector(".add__form").querySelector(`[name="name"]`).removeAttribute("disabled");
+    let postsLayout = "";
+    for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", search, i).then((data)=>{
+        const layout = (0, _postsNologinedHbsDefault.default)({
+            data
+        });
+        postsLayout = postsLayout.concat("", layout);
+    });
+    document.querySelector(".posts__list").innerHTML = postsLayout;
+});
+document.querySelector("#log-in").addEventListener("click", ()=>{
+    document.querySelector(".login__backdrop").classList.remove("is-hidden");
+    document.querySelector("body").classList.add("no-scroll");
+});
+document.querySelector(".login__close").addEventListener("click", ()=>{
+    document.querySelector(".login__backdrop").classList.add("is-hidden");
+    document.querySelector("body").classList.remove("no-scroll");
+    document.querySelector(".login__form").querySelector(`[name="email"]`).value = "";
+    document.querySelector(".login__form").querySelector(`[name="password"]`).value = "";
+    document.querySelector("#login-error-email").classList.add("display-none");
+    document.querySelector("#login-error-password").classList.add("display-none");
+    document.querySelector(".login__error").classList.add("display-none");
+});
+document.querySelector(".login__form").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    document.querySelector("#login-error-email").classList.add("display-none");
+    document.querySelector(".login__error").classList.add("display-none");
+    document.querySelector("#login-error-password").classList.add("display-none");
+    const emailText = e.target[0].value;
+    const passwordText = e.target[1].value;
+    const email = await (0, _getUsers.getUsers)().then((users)=>users.filter((user)=>user.email === emailText).length > 0);
+    if (!email) {
+        document.querySelector(".login__error").classList.remove("display-none");
+        document.querySelector("#login-error-email").classList.remove("display-none");
+        return;
+    }
+    const [user] = await (0, _getUsers.getUsers)().then((users)=>users.filter((user)=>user.email === emailText));
+    if (user.password !== passwordText) {
+        document.querySelector(".login__error").classList.remove("display-none");
+        document.querySelector("#login-error-password").classList.remove("display-none");
+        return;
+    }
+    document.querySelector(".login__backdrop").classList.add("is-hidden");
+    document.querySelector("body").classList.remove("no-scroll");
+    document.querySelector("#login-error-password").classList.add("display-none");
+    document.querySelector(".login__error").classList.add("display-none");
+    document.querySelector("#login-error-email").classList.add("display-none");
+    e.target[0].value = "";
+    e.target[1].value = "";
+    document.querySelector(".header__list").classList.add("display-none");
+    document.querySelector(".header__wrapper").classList.remove("display-none");
+    localStorage.setItem("isLogined", user.name);
+    document.querySelector(".header__name").textContent = user.name;
+    document.querySelector(".add__form").querySelector(`[name="name"]`).value = localStorage.getItem("isLogined");
+    document.querySelector(".add__form").querySelector(`[name="name"]`).setAttribute("disabled", "");
+    let postsLayout = "";
+    for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", search, i).then((data)=>{
+        const layout = (0, _postsHbsDefault.default)({
+            data
+        });
+        postsLayout = postsLayout.concat("", layout);
+    });
+    document.querySelector(".posts__list").innerHTML = postsLayout;
 });
 
-},{"./crud/get-posts":"1ZCbl","./crud/create-posts":"bF5Fo","./crud/update-post":"13tU7","../templates/posts.hbs":"2DwaZ","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","./crud/get-post":"8Oywy","./crud/delete-post":"8svaa","./crud/get-filtered-posts":"hYpGY"}],"1ZCbl":[function(require,module,exports,__globalThis) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "getPosts", ()=>getPosts);
-const getPosts = async (page)=>{
-    try {
-        return await fetch(`https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/posts?l=8&p=${page}`).then((reponse)=>reponse.json());
-    } catch (e) {
-        return e;
-    }
-};
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"jnFvT":[function(require,module,exports,__globalThis) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, '__esModule', {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === 'default' || key === '__esModule' || Object.prototype.hasOwnProperty.call(dest, key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}],"bF5Fo":[function(require,module,exports,__globalThis) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "createPost", ()=>createPost);
-const createPost = async (post)=>{
-    try {
-        await fetch("https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/posts", {
-            method: "POST",
-            body: JSON.stringify(post),
-            headers: {
-                "Content-Type": "application/json; charset=UTF-8"
-            }
-        });
-    } catch (e) {
-        return e;
-    }
-};
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"13tU7":[function(require,module,exports,__globalThis) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "updatePost", ()=>updatePost);
-const updatePost = async (post, id)=>{
-    try {
-        await fetch(`https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/posts/${id}`, {
-            method: "PUT",
-            body: JSON.stringify(post),
-            headers: {
-                "Content-Type": "application/json; charset=UTF-8"
-            }
-        });
-    } catch (e) {
-        return e;
-    }
-};
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"2DwaZ":[function(require,module,exports,__globalThis) {
+},{"../templates/posts.hbs":"2DwaZ","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","./crud/posts/get-posts":"8yxGq","./crud/posts/create-posts":"4k6RK","./crud/posts/update-post":"eYy4B","./crud/posts/get-post":"3hdaW","./crud/posts/delete-post":"er1e7","./crud/posts/get-filtered-posts":"iCqod","./crud/users/create-user":"3mOR3","./crud/users/get-users":"77gwz","../templates/posts-nologined.hbs":"i3dlV"}],"2DwaZ":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _handlebars = require("handlebars");
@@ -954,18 +1034,18 @@ const templateFunction = (0, _handlebarsDefault.default).template({
                     "column": 16
                 }
             }
-        }) : helper)) + "\" class=\"posts__item\">\r\n    <div class=\"posts__wrapper\">\r\n      <img src=\"" + alias4((helper = (helper = lookupProperty(helpers, "avatar") || (depth0 != null ? lookupProperty(depth0, "avatar") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+        }) : helper)) + "\" class=\"posts__item\">\r\n    <div>\r\n      <div class=\"posts__wrapper\">\r\n        <img src=\"" + alias4((helper = (helper = lookupProperty(helpers, "avatar") || (depth0 != null ? lookupProperty(depth0, "avatar") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
             "name": "avatar",
             "hash": {},
             "data": data,
             "loc": {
                 "start": {
-                    "line": 4,
-                    "column": 16
+                    "line": 5,
+                    "column": 18
                 },
                 "end": {
-                    "line": 4,
-                    "column": 26
+                    "line": 5,
+                    "column": 28
                 }
             }
         }) : helper)) + "\" alt=\"" + alias4((helper = (helper = lookupProperty(helpers, "tag") || (depth0 != null ? lookupProperty(depth0, "tag") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
@@ -974,57 +1054,57 @@ const templateFunction = (0, _handlebarsDefault.default).template({
             "data": data,
             "loc": {
                 "start": {
-                    "line": 4,
-                    "column": 33
+                    "line": 5,
+                    "column": 35
                 },
                 "end": {
-                    "line": 4,
-                    "column": 40
+                    "line": 5,
+                    "column": 42
                 }
             }
-        }) : helper)) + "\" class=\"posts__img\" />\r\n      <h3 class=\"posts__name\">" + alias4((helper = (helper = lookupProperty(helpers, "user") || (depth0 != null ? lookupProperty(depth0, "user") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+        }) : helper)) + "\" class=\"posts__img\" />\r\n        <h3 class=\"posts__name\">" + alias4((helper = (helper = lookupProperty(helpers, "user") || (depth0 != null ? lookupProperty(depth0, "user") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
             "name": "user",
             "hash": {},
             "data": data,
             "loc": {
                 "start": {
-                    "line": 5,
-                    "column": 30
+                    "line": 6,
+                    "column": 32
                 },
                 "end": {
-                    "line": 5,
-                    "column": 38
+                    "line": 6,
+                    "column": 40
                 }
             }
-        }) : helper)) + "</h3>\r\n    </div>\r\n    <p class=\"posts__tag\">" + alias4((helper = (helper = lookupProperty(helpers, "tag") || (depth0 != null ? lookupProperty(depth0, "tag") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+        }) : helper)) + "</h3>\r\n      </div>\r\n      <p class=\"posts__tag\">" + alias4((helper = (helper = lookupProperty(helpers, "tag") || (depth0 != null ? lookupProperty(depth0, "tag") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
             "name": "tag",
             "hash": {},
             "data": data,
             "loc": {
                 "start": {
-                    "line": 7,
-                    "column": 26
-                },
-                "end": {
-                    "line": 7,
-                    "column": 33
-                }
-            }
-        }) : helper)) + "</p>\r\n    <p class=\"posts__body\">" + alias4((helper = (helper = lookupProperty(helpers, "body") || (depth0 != null ? lookupProperty(depth0, "body") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
-            "name": "body",
-            "hash": {},
-            "data": data,
-            "loc": {
-                "start": {
                     "line": 8,
-                    "column": 27
+                    "column": 28
                 },
                 "end": {
                     "line": 8,
                     "column": 35
                 }
             }
-        }) : helper)) + "</p>\r\n    <button class=\"posts__comments\">See comments</button>\r\n    <div class=\"posts__btns\">\r\n      <button class=\"posts__btn posts__btn--update\">Update</button>\r\n      <button class=\"posts__btn posts__btn--delete\">Delete</button>\r\n    </div>\r\n  </li>\r\n";
+        }) : helper)) + "</p>\r\n      <p class=\"posts__body\">" + alias4((helper = (helper = lookupProperty(helpers, "body") || (depth0 != null ? lookupProperty(depth0, "body") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+            "name": "body",
+            "hash": {},
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 9,
+                    "column": 29
+                },
+                "end": {
+                    "line": 9,
+                    "column": 37
+                }
+            }
+        }) : helper)) + "</p>\r\n    </div>\r\n    <div>\r\n      <button class=\"posts__comments\">See comments</button>\r\n      <div class=\"posts__btns\">\r\n        <button class=\"posts__btn posts__btn--update\">Update</button>\r\n        <button class=\"posts__btn posts__btn--delete\">Delete</button>\r\n      </div>\r\n    </div>\r\n  </li>\r\n";
     },
     "compiler": [
         8,
@@ -1047,7 +1127,7 @@ const templateFunction = (0, _handlebarsDefault.default).template({
                     "column": 0
                 },
                 "end": {
-                    "line": 15,
+                    "line": 19,
                     "column": 9
                 }
             }
@@ -12229,7 +12309,85 @@ var isSourceNode = "$$$isSourceNode$$$";
 };
 exports.SourceNode = SourceNode;
 
-},{"a07d2c2c4b11c39f":"fWPsq","18d5ff036a08fa06":"5Iq0C"}],"8Oywy":[function(require,module,exports,__globalThis) {
+},{"a07d2c2c4b11c39f":"fWPsq","18d5ff036a08fa06":"5Iq0C"}],"jnFvT":[function(require,module,exports,__globalThis) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, '__esModule', {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === 'default' || key === '__esModule' || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"8yxGq":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "getPosts", ()=>getPosts);
+const getPosts = async (page)=>{
+    try {
+        return await fetch(`https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/posts?l=8&p=${page}`).then((reponse)=>reponse.json());
+    } catch (e) {
+        return e;
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"4k6RK":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "createPost", ()=>createPost);
+const createPost = async (post)=>{
+    try {
+        await fetch("https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/posts", {
+            method: "POST",
+            body: JSON.stringify(post),
+            headers: {
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        });
+    } catch (e) {
+        return e;
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"eYy4B":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "updatePost", ()=>updatePost);
+const updatePost = async (post, id)=>{
+    try {
+        await fetch(`https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/posts/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(post),
+            headers: {
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        });
+    } catch (e) {
+        return e;
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"3hdaW":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getPost", ()=>getPost);
@@ -12241,7 +12399,7 @@ const getPost = async (id)=>{
     }
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"8svaa":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"er1e7":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "deletePost", ()=>deletePost);
@@ -12255,7 +12413,7 @@ const deletePost = async (id)=>{
     }
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"hYpGY":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"iCqod":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "getFilteredPosts", ()=>getFilteredPosts);
@@ -12268,6 +12426,164 @@ const getFilteredPosts = async (key, value, page)=>{
     }
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}]},["5j6Kf","a0t4e"], "a0t4e", "parcelRequire0923", {})
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"3mOR3":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "createUser", ()=>createUser);
+const createUser = async (user)=>{
+    try {
+        await fetch("https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/users", {
+            method: "POST",
+            body: JSON.stringify(user),
+            headers: {
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        });
+    } catch (e) {
+        return e;
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"77gwz":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "getUsers", ()=>getUsers);
+const getUsers = async ()=>{
+    try {
+        return await fetch(`https://680dfecfc47cb8074d91bfc4.mockapi.io/mini-project/users`).then((reponse)=>reponse.json());
+    } catch (e) {
+        return e;
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"i3dlV":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _handlebars = require("handlebars");
+var _handlebarsDefault = parcelHelpers.interopDefault(_handlebars);
+const templateFunction = (0, _handlebarsDefault.default).template({
+    "1": function(container, depth0, helpers, partials, data) {
+        var helper, alias1 = depth0 != null ? depth0 : container.nullContext || {}, alias2 = container.hooks.helperMissing, alias3 = "function", alias4 = container.escapeExpression, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+            if (Object.prototype.hasOwnProperty.call(parent, propertyName)) return parent[propertyName];
+            return undefined;
+        };
+        return "  <li id=\"" + alias4((helper = (helper = lookupProperty(helpers, "id") || (depth0 != null ? lookupProperty(depth0, "id") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+            "name": "id",
+            "hash": {},
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 2,
+                    "column": 10
+                },
+                "end": {
+                    "line": 2,
+                    "column": 16
+                }
+            }
+        }) : helper)) + "\" class=\"posts__item\">\r\n    <div>\r\n      <div class=\"posts__wrapper\">\r\n        <img src=\"" + alias4((helper = (helper = lookupProperty(helpers, "avatar") || (depth0 != null ? lookupProperty(depth0, "avatar") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+            "name": "avatar",
+            "hash": {},
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 5,
+                    "column": 18
+                },
+                "end": {
+                    "line": 5,
+                    "column": 28
+                }
+            }
+        }) : helper)) + "\" alt=\"" + alias4((helper = (helper = lookupProperty(helpers, "tag") || (depth0 != null ? lookupProperty(depth0, "tag") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+            "name": "tag",
+            "hash": {},
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 5,
+                    "column": 35
+                },
+                "end": {
+                    "line": 5,
+                    "column": 42
+                }
+            }
+        }) : helper)) + "\" class=\"posts__img\" />\r\n        <h3 class=\"posts__name\">" + alias4((helper = (helper = lookupProperty(helpers, "user") || (depth0 != null ? lookupProperty(depth0, "user") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+            "name": "user",
+            "hash": {},
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 6,
+                    "column": 32
+                },
+                "end": {
+                    "line": 6,
+                    "column": 40
+                }
+            }
+        }) : helper)) + "</h3>\r\n      </div>\r\n      <p class=\"posts__tag\">" + alias4((helper = (helper = lookupProperty(helpers, "tag") || (depth0 != null ? lookupProperty(depth0, "tag") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+            "name": "tag",
+            "hash": {},
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 8,
+                    "column": 28
+                },
+                "end": {
+                    "line": 8,
+                    "column": 35
+                }
+            }
+        }) : helper)) + "</p>\r\n      <p class=\"posts__body\">" + alias4((helper = (helper = lookupProperty(helpers, "body") || (depth0 != null ? lookupProperty(depth0, "body") : depth0)) != null ? helper : alias2, typeof helper === alias3 ? helper.call(alias1, {
+            "name": "body",
+            "hash": {},
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 9,
+                    "column": 29
+                },
+                "end": {
+                    "line": 9,
+                    "column": 37
+                }
+            }
+        }) : helper)) + "</p>\r\n    </div>\r\n  </li>\r\n";
+    },
+    "compiler": [
+        8,
+        ">= 4.3.0"
+    ],
+    "main": function(container, depth0, helpers, partials, data) {
+        var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+            if (Object.prototype.hasOwnProperty.call(parent, propertyName)) return parent[propertyName];
+            return undefined;
+        };
+        return (stack1 = lookupProperty(helpers, "each").call(depth0 != null ? depth0 : container.nullContext || {}, depth0 != null ? lookupProperty(depth0, "data") : depth0, {
+            "name": "each",
+            "hash": {},
+            "fn": container.program(1, data, 0),
+            "inverse": container.noop,
+            "data": data,
+            "loc": {
+                "start": {
+                    "line": 1,
+                    "column": 0
+                },
+                "end": {
+                    "line": 12,
+                    "column": 9
+                }
+            }
+        })) != null ? stack1 : "";
+    },
+    "useData": true
+});
+exports.default = templateFunction;
+
+},{"handlebars":"9pFby","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}]},["5j6Kf","a0t4e"], "a0t4e", "parcelRequire0923", {})
 
 //# sourceMappingURL=js-mini-project.31b563d9.js.map
