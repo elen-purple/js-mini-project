@@ -40,10 +40,10 @@ getPosts(page).then((data) => {
   document.querySelector(".posts__list").innerHTML = layout;
 });
 let search = "";
-document.querySelector(".posts__load").addEventListener("click", () => {
+document.querySelector(".posts__load").addEventListener("click", async () => {
   if (document.querySelector(".posts__input").value !== "") {
     page += 1;
-    getFilteredPosts("tag", search, page).then((data) => {
+    await getFilteredPosts("tag", search, page).then((data) => {
       let layout;
       if (localStorage.getItem("isLogined")) {
         layout = layoutPosts({ data });
@@ -54,9 +54,15 @@ document.querySelector(".posts__load").addEventListener("click", () => {
         .querySelector(".posts__list")
         .insertAdjacentHTML("beforeend", layout);
     });
+    const posts = await getFilteredPosts("tag", search, page + 1).then(
+      (data) => data
+    );
+    if (posts.length === 0) {
+      document.querySelector(".posts__load").classList.add("display-none");
+    }
   } else {
     page += 1;
-    getPosts(page).then((data) => {
+    await getPosts(page).then((data) => {
       let layout;
       if (localStorage.getItem("isLogined")) {
         layout = layoutPosts({ data });
@@ -67,6 +73,10 @@ document.querySelector(".posts__load").addEventListener("click", () => {
         .querySelector(".posts__list")
         .insertAdjacentHTML("beforeend", layout);
     });
+    const posts = await getPosts(page + 1).then((data) => data);
+    if (posts.length === 0) {
+      document.querySelector(".posts__load").classList.add("display-none");
+    }
   }
 });
 
@@ -80,23 +90,57 @@ document.querySelector(".add__form").addEventListener("submit", async (e) => {
     comments: [],
   };
   e.target[0].value = "";
-  e.target[1].value = "";
+  if (!localStorage.getItem("isLogined")) {
+    e.target[1].value = "";
+  }
   e.target[2].value = "";
   e.target[3].value = "";
   await createPost(post);
   let postsLayout = "";
-  for (let i = 1; i < page + 1; i += 1) {
-    await getPosts(i).then((data) => {
-      let layout;
-      if (localStorage.getItem("isLogined")) {
-        layout = layoutPosts({ data });
-      } else {
-        layout = layoutPostsNoLogined({ data });
-      }
-      postsLayout = postsLayout.concat("", layout);
-    });
+  if (document.querySelector(".posts__input").value !== "") {
+    for (let i = 1; i < page + 1; i += 1) {
+      await getFilteredPosts(
+        "tag",
+        document.querySelector(".posts__input").value,
+        i
+      ).then((data) => {
+        let layout;
+        if (localStorage.getItem("isLogined")) {
+          layout = layoutPosts({ data });
+        } else {
+          layout = layoutPostsNoLogined({ data });
+        }
+        postsLayout = postsLayout.concat("", layout);
+      });
+    }
+  } else {
+    for (let i = 1; i < page + 1; i += 1) {
+      await getPosts(i).then((data) => {
+        let layout;
+        if (localStorage.getItem("isLogined")) {
+          layout = layoutPosts({ data });
+        } else {
+          layout = layoutPostsNoLogined({ data });
+        }
+        postsLayout = postsLayout.concat("", layout);
+      });
+    }
   }
   document.querySelector(".posts__list").innerHTML = postsLayout;
+  document.querySelector(".posts__load").classList.remove("display-none");
+  if (document.querySelector(".posts__input").value !== "") {
+    const posts = await getFilteredPosts("tag", search, page + 1).then(
+      (data) => data
+    );
+    if (posts.length === 0) {
+      document.querySelector(".posts__load").classList.add("display-none");
+    }
+  } else {
+    const posts = await getPosts(page + 1).then((data) => data);
+    if (posts.length === 0) {
+      document.querySelector(".posts__load").classList.add("display-none");
+    }
+  }
 });
 
 let currentId = "";
@@ -252,10 +296,18 @@ document.querySelector(".posts__input").addEventListener("input", async (e) => {
     });
   }
   document.querySelector(".posts__list").innerHTML = postsLayout;
+  document.querySelector(".posts__load").classList.remove("display-none");
   if (document.querySelector(".posts__list").innerHTML === "") {
     document.querySelector(
       ".posts__list"
     ).innerHTML = `<p class="posts__none">There are any posts like this...</p>`;
+    document.querySelector(".posts__load").classList.add("display-none");
+  }
+  const filteredPosts = await getFilteredPosts("tag", search, page + 1).then(
+    (data) => data
+  );
+  if (filteredPosts.length === 0) {
+    document.querySelector(".posts__load").classList.add("display-none");
   }
 });
 
