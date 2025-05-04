@@ -706,10 +706,10 @@ let page = 1;
     document.querySelector(".posts__list").innerHTML = layout;
 });
 let search = "";
-document.querySelector(".posts__load").addEventListener("click", ()=>{
+document.querySelector(".posts__load").addEventListener("click", async ()=>{
     if (document.querySelector(".posts__input").value !== "") {
         page += 1;
-        (0, _getFilteredPosts.getFilteredPosts)("tag", search, page).then((data)=>{
+        await (0, _getFilteredPosts.getFilteredPosts)("tag", search, page).then((data)=>{
             let layout;
             if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
                 data
@@ -719,9 +719,11 @@ document.querySelector(".posts__load").addEventListener("click", ()=>{
             });
             document.querySelector(".posts__list").insertAdjacentHTML("beforeend", layout);
         });
+        const posts = await (0, _getFilteredPosts.getFilteredPosts)("tag", search, page + 1).then((data)=>data);
+        if (posts.length === 0) document.querySelector(".posts__load").classList.add("display-none");
     } else {
         page += 1;
-        (0, _getPosts.getPosts)(page).then((data)=>{
+        await (0, _getPosts.getPosts)(page).then((data)=>{
             let layout;
             if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
                 data
@@ -731,6 +733,8 @@ document.querySelector(".posts__load").addEventListener("click", ()=>{
             });
             document.querySelector(".posts__list").insertAdjacentHTML("beforeend", layout);
         });
+        const posts = await (0, _getPosts.getPosts)(page + 1).then((data)=>data);
+        if (posts.length === 0) document.querySelector(".posts__load").classList.add("display-none");
     }
 });
 document.querySelector(".add__form").addEventListener("submit", async (e)=>{
@@ -743,12 +747,22 @@ document.querySelector(".add__form").addEventListener("submit", async (e)=>{
         comments: []
     };
     e.target[0].value = "";
-    e.target[1].value = "";
+    if (!localStorage.getItem("isLogined")) e.target[1].value = "";
     e.target[2].value = "";
     e.target[3].value = "";
     await (0, _createPosts.createPost)(post);
     let postsLayout = "";
-    for(let i = 1; i < page + 1; i += 1)await (0, _getPosts.getPosts)(i).then((data)=>{
+    if (document.querySelector(".posts__input").value !== "") for(let i = 1; i < page + 1; i += 1)await (0, _getFilteredPosts.getFilteredPosts)("tag", document.querySelector(".posts__input").value, i).then((data)=>{
+        let layout;
+        if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
+            data
+        });
+        else layout = (0, _postsNologinedHbsDefault.default)({
+            data
+        });
+        postsLayout = postsLayout.concat("", layout);
+    });
+    else for(let i = 1; i < page + 1; i += 1)await (0, _getPosts.getPosts)(i).then((data)=>{
         let layout;
         if (localStorage.getItem("isLogined")) layout = (0, _postsHbsDefault.default)({
             data
@@ -759,6 +773,14 @@ document.querySelector(".add__form").addEventListener("submit", async (e)=>{
         postsLayout = postsLayout.concat("", layout);
     });
     document.querySelector(".posts__list").innerHTML = postsLayout;
+    document.querySelector(".posts__load").classList.remove("display-none");
+    if (document.querySelector(".posts__input").value !== "") {
+        const posts = await (0, _getFilteredPosts.getFilteredPosts)("tag", search, page + 1).then((data)=>data);
+        if (posts.length === 0) document.querySelector(".posts__load").classList.add("display-none");
+    } else {
+        const posts = await (0, _getPosts.getPosts)(page + 1).then((data)=>data);
+        if (posts.length === 0) document.querySelector(".posts__load").classList.add("display-none");
+    }
 });
 let currentId = "";
 document.querySelector(".posts__list").addEventListener("click", async (e)=>{
@@ -881,7 +903,13 @@ document.querySelector(".posts__input").addEventListener("input", async (e)=>{
         postsLayout = postsLayout.concat("", layout);
     });
     document.querySelector(".posts__list").innerHTML = postsLayout;
-    if (document.querySelector(".posts__list").innerHTML === "") document.querySelector(".posts__list").innerHTML = `<p class="posts__none">There are any posts like this...</p>`;
+    document.querySelector(".posts__load").classList.remove("display-none");
+    if (document.querySelector(".posts__list").innerHTML === "") {
+        document.querySelector(".posts__list").innerHTML = `<p class="posts__none">There are any posts like this...</p>`;
+        document.querySelector(".posts__load").classList.add("display-none");
+    }
+    const filteredPosts = await (0, _getFilteredPosts.getFilteredPosts)("tag", search, page + 1).then((data)=>data);
+    if (filteredPosts.length === 0) document.querySelector(".posts__load").classList.add("display-none");
 });
 document.querySelector("#sign-up").addEventListener("click", ()=>{
     document.querySelector(".signup__backdrop").classList.remove("is-hidden");
